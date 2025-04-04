@@ -30,6 +30,7 @@ rangos <- list(
 )
 
 # --- 4. Generar datos simulados ---
+
 set.seed(123)  # Para asegurar reproducibilidad
 
 datos <- expand.grid(
@@ -51,5 +52,76 @@ datos <- expand.grid(
   ) %>%
   ungroup()
 
-# --- 5. Visualizar los primeros registros ---
+# --- 5. Visualizar los primeros registros ---#
 head(datos)
+
+# --- 6. Análisis descriptivos ---#
+
+library(psych)
+describe(datos[, 6:12])  # Estadísticos básicos de las variables cuantitativas
+
+# --- 7. Visualización exploratoria ---#
+
+library(ggplot2)
+
+# Histograma de fitoplancton
+ggplot(datos, aes(x = `Fitoplancton (cél/mL)`)) +
+  geom_histogram(fill = "skyblue", color = "black") +
+  labs(title = "Distribución del fitoplancton", x = "Células/mL", y = "Frecuencia")
+
+# Boxplot por estación
+ggplot(datos, aes(x = Estación, y = `Fitoplancton (cél/mL)`, fill = Estación)) +
+  geom_boxplot() +
+  theme_minimal() +
+  labs(title = "Fitoplancton por estación", y = "Células/mL")
+
+# --- 8. Análisis de correlación y regresión ---#
+
+# Correlación de Spearman
+cor.test(datos$`Fitoplancton (cél/mL)`, datos$`Temperatura (°C)`, method = "spearman")
+
+# Regresión lineal
+modelo <- lm(`Fitoplancton (cél/mL)` ~ `Temperatura (°C)`, data = datos)
+summary(modelo)
+
+# --- 9. Análisis de varianza (ANOVA) ---#
+
+anova <- aov(`Fitoplancton (cél/mL)` ~ Estación, data = datos)
+summary(anova)
+
+# --- 9. Análisis de componenten principales (PCA) ---#
+
+library(FactoMineR)
+library(factoextra)
+
+library(FactoMineR)
+library(factoextra)
+
+# Paso 1: Seleccionar solo variables numéricas
+variables_numericas <- datos[, c("Temperatura (°C)", "O2 disuelto (mg/L)", "Fosfatos (mg/L)",
+                                 "Nitratos (mg/L)", "Clorofila-a (µg/L)", 
+                                 "Fitoplancton (cél/mL)", "Zooplancton (org/L)")]
+
+# Paso 2: Realizar PCA
+res.pca <- PCA(variables_numericas, scale.unit = TRUE, graph = FALSE)
+
+# Paso 3: Graficar con elipsoides por estación
+fviz_pca_ind(res.pca,
+             habillage = datos$Estación,       # Agrupar por estación
+             addEllipses = TRUE,               # Agregar elipsoides
+             ellipse.level = 0.95,             # Nivel de confianza
+             palette = "Dark2",
+             repel = TRUE,
+             title = "PCA: Variables ambientales y biológicas\nAgrupadas por estación")
+
+
+# --- 10. Exportar resultados a tabals ---#
+
+# Exportar datos a CSV
+write.csv(datos, "datos_simulados_fitoplancton.csv", row.names = FALSE)
+
+# Exportar resumen del modelo
+capture.output(summary(modelo), file = "resumen_regresion.txt")
+capture.output(summary(anova), file = "resumen_anova.txt")
+
+
