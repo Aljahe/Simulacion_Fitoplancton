@@ -277,6 +277,51 @@ Resumen de los clusters (resumen_clusters.csv)
 
 Puedes ejecutar cada bloque de código directamente desde el script .R, asegurándote de tener cargadas las librerías necesarias (psych, ggplot2, FactoMineR, factoextra, dplyr).
 
+#### Modelación
+
+# Análisis del Crecimiento del Fitoplancton en un Lago Eutrofizado  
+
+Este repositorio contiene el código y los datos utilizados para modelar el crecimiento del fitoplancton en un lago eutrofizado, empleando un modelo logístico.  
+
+## Descripción del Proyecto  
+
+El objetivo de este análisis es evaluar cómo varía la dinámica de crecimiento del fitoplancton en función de la disponibilidad de nutrientes y la temperatura. Se utilizó un modelo logístico para estimar la capacidad de carga (**K**) y la tasa de crecimiento (**r**).  
+
+## Modelo Logístico  
+
+El modelo logístico ajustado tiene la siguiente ecuación:  
+
+\[
+N(t) = \frac{K}{1 + \left(\frac{K - N_0}{N_0}\right) e^{-r t}}
+\]
+
+Donde:  
+- \( N(t) \) = cantidad de fitoplancton en el tiempo \( t \) (células/mL)  
+- \( K \) = capacidad de carga  
+- \( N_0 \) = población inicial  
+- \( r \) = tasa de crecimiento  
+
+Los valores ajustados en el análisis fueron:  
+- **K = 99,190 células/mL**  
+- **N₀ = 979.6 células/mL**  
+- **r = 0.2011 día⁻¹**  
+
+## Resultados  
+
+Se generó un gráfico comparando el modelo ajustado con los datos empíricos. Se observa que el modelo describe adecuadamente la fase exponencial y el acercamiento a la capacidad de carga, aunque en tiempos tardíos hay variaciones no explicadas por el modelo.  
+
+![Modelo logístico del fitoplancton](image.png)  
+
+## Reproducibilidad  
+
+Para ejecutar el análisis en R, sigue estos pasos:  
+
+1. Clona este repositorio:  
+
+   ```bash
+   git clone https://github.com/tu_usuario/tu_repositorio.git
+   cd tu_repositorio
+
 
 ## Contacto
 Para dudas o sugerencias, puedes escribir a [Aljahe].
