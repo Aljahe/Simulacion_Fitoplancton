@@ -1,0 +1,20 @@
+
+Call:
+lm(formula = `Fitoplancton (cél/mL)` ~ `Temperatura (°C)`, 
+    data = datos)
+
+Residuals:
+   Min     1Q Median     3Q    Max 
+-41687 -29574  -4069  26280  72655 
+
+Coefficients:
+                   Estimate Std. Error t value Pr(>|t|)    
+(Intercept)         48672.4     6963.1   6.990 2.54e-10 ***
+`Temperatura (°C)`   -226.7      490.3  -0.462    0.645    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 33870 on 106 degrees of freedom
+Multiple R-squared:  0.002013,	Adjusted R-squared:  -0.007402 
+F-statistic: 0.2139 on 1 and 106 DF,  p-value: 0.6447
+
