@@ -79,11 +79,11 @@ colSums(is.na(datos))
 
 ## Análisis estadísticos
 
-Los datos obtenidos fueron sometidos a un análisis exploratorio mediante estadísticos descriptivos de tendencia central (media aritmética, MA) y de dispersión (desviación estándar, S, y coeficiente de variación relativa de Pearson, CV). 
+Los datos obtenidos fueron sometidos a un análisis exploratorio mediante estadísticos descriptivos de tendencia central. 
 
 Para evaluar la significancia de la variación temporal de la biomasa de fitoplancton se realizó un análisis de varianza (ANOVA). Las relaciones entre la biomasa y los nutrientes (fosfatos y nitratos), así como con la temperatura, se exploraron mediante correlaciones no paramétricas de Spearman y análisis de regresión lineal simple.
 
-Adicionalmente, se aplicó un análisis de componentes principales (ACP) con el fin de detectar patrones de organización de las variables de producción, condiciones climáticas y parámetros fisicoquímicos. Todos los análisis se realizaron en R.
+Adicionalmente, se aplicó un análisis de componentes principales (ACP) con el fin de detectar patrones de organización de las variables de producción, condiciones climáticas y parámetros fisicoquímicos. Todos los análisis se realizaron en R. Por  último se realizó un análisis de clusters por grupos. 
 
 ## Estructura del Repositorio
 
@@ -101,6 +101,182 @@ Instala los paquetes necesarios en R:
 
 ```r
 install.packages(c("dplyr", "ggplot2", "writexl", "psych", "FactoMineR", "factoextra", "readxl"))
+
+# Análisis de la dinámica del fitoplancton en un lago eutrofizado
+
+Este repositorio contiene el análisis de una base de datos simulada que evalúa cómo varía la biomasa del fitoplancton en función de la disponibilidad de nutrientes (fosfatos y nitratos), la temperatura y otros parámetros fisicoquímicos. Este estudio tiene como propósito simular un caso de eutrofización y evaluar relaciones que puedan orientar estrategias de manejo ecológico.
+
+---
+
+## Contenido del repositorio
+
+- `script_fitoplancton.R`: script principal con análisis y visualización.
+- `datos_lago.csv`: base de datos simulada.
+- `analisis_regresion_fosfatos_fitoplancton.csv`: tabla resumen de regresión.
+
+---
+
+## Requisitos
+
+Este análisis se ejecuta en R. Asegúrate de tener instalados los siguientes paquetes:
+
+```r
+install.packages(c("tidyverse", "psych"))
+```
+
+---
+
+## Pasos del análisis
+
+### 1. Carga de datos
+
+Se cargan los datos desde un archivo `.csv` que contiene medidas simuladas de temperatura, oxígeno disuelto, nutrientes, clorofila-a, zooplancton y fitoplancton en diferentes estaciones del año.
+
+### 2. Análisis Descriptivo
+
+Se realizaron análisis descriptivos y visualizaciones para comprender la distribución y variabilidad de las variables físico-químicas y biológicas.
+
+#### Estadísticos Descriptivos
+
+Se usó la función `describe()` del paquete `psych` para calcular medidas de tendencia central, dispersión y forma (media, mediana, desviación estándar, curtosis, etc.) de las variables numéricas.
+
+#### Visualización Exploratoria
+
+Se generaron histogramas y diagramas de caja (boxplots) para analizar la distribución del fitoplancton y su variación estacional:
+
+- Histograma de la biomasa de fitoplancton.
+- Boxplot por estación del año.
+
+### 3. Análisis de Correlación y Regresión
+
+Se exploraron relaciones entre la biomasa de fitoplancton y otras variables mediante:
+
+- **Correlación de Spearman** para evaluar asociaciones no paramétricas.
+- **Regresión lineal simple** entre fitoplancton y fosfatos.
+
+### 4. Análisis descriptivo
+
+Se realiza un resumen estadístico de las variables cuantitativas utilizando la función `describe()` del paquete `psych`. Esto permite observar promedios, desviaciones estándar, mínimos, máximos, entre otros indicadores básicos de las variables físicas, químicas y biológicas.
+
+### 5. Visualización exploratoria
+
+Se emplean histogramas y diagramas de caja (boxplots) para explorar la distribución de la biomasa fitoplanctónica en el lago, incluyendo su variación por estación del año.
+
+### 6. Análisis de correlación y regresión
+
+Se evalúan correlaciones de Spearman entre fitoplancton y variables ambientales (temperatura, oxígeno disuelto, fosfatos, nitratos, clorofila-a, zooplancton). Posteriormente, se construye un modelo lineal para explorar la relación entre la concentración de fosfatos y la abundancia de fitoplancton, incluyendo visualización gráfica y exportación de los resultados a un archivo CSV.
+
+### 7. Análisis de varianza (ANOVA)
+
+Se aplicó un análisis de varianza de una vía (ANOVA) para evaluar si existen diferencias significativas en la biomasa del fitoplancton entre estaciones del año. Este análisis permite identificar patrones estacionales en la producción biológica del lago.
+
+**Código clave:**
+```r
+anova <- aov(`Fitoplancton (cél/mL)` ~ Estación, data = datos)
+summary(anova)
+```
+
+**Interpretación esperada:**  
+Un valor de *p* < 0.05 indicaría que al menos una estación presenta diferencias significativas en comparación con las otras, en términos de biomasa fitoplanctónica.
+
+### 8. Análisis de Componentes Principales (PCA)
+
+Se realizó un Análisis de Componentes Principales (PCA) para reducir la dimensionalidad del conjunto de variables ambientales y biológicas, y visualizar patrones de agrupamiento por estación.
+
+**Variables utilizadas:**  
+Temperatura, oxígeno disuelto, fosfatos, nitratos, clorofila-a, fitoplancton y zooplancton.
+
+**Pasos del análisis:**
+1. Selección de variables numéricas.
+2. Estandarización (opcional, se usó `scale.unit = TRUE`).
+3. Cálculo de componentes principales.
+4. Visualización con elipsoides de agrupamiento por estación.
+
+**Código clave:**
+```r
+res.pca <- PCA(variables_numericas, scale.unit = TRUE, graph = FALSE)
+fviz_pca_ind(res.pca, habillage = datos$Estación, addEllipses = TRUE)
+```
+
+**Interpretación esperada:**  
+El gráfico PCA permite observar si los grupos estacionales presentan patrones diferenciados en el espacio multivariado. Las variables con mayor contribución a los componentes principales pueden interpretarse como las más influyentes en la dinámica del ecosistema.
+
+---
+
+Puedes ejecutar cada bloque de código directamente desde el script `.R`, asegurándote de tener cargadas las librerías necesarias (`psych`, `ggplot2`, `FactoMineR`, `factoextra`).
+
+### 9. Análisis de Componentes Principales (PCA)
+
+Se realizó un Análisis de Componentes Principales (PCA) para reducir la dimensionalidad del conjunto de variables ambientales y biológicas, y visualizar patrones de agrupamiento por estación.
+
+Variables utilizadas:Temperatura, oxígeno disuelto, fosfatos, nitratos, clorofila-a, fitoplancton y zooplancton.
+
+Pasos del análisis:
+
+Selección de variables numéricas.
+
+Estandarización (opcional, se usó scale.unit = TRUE).
+
+Cálculo de componentes principales.
+
+Visualización con elipsoides de agrupamiento por estación.
+
+Código clave:
+
+res.pca <- PCA(variables_numericas, scale.unit = TRUE, graph = FALSE)
+fviz_pca_ind(res.pca, habillage = datos$Estación, addEllipses = TRUE)
+
+Interpretación esperada:El gráfico PCA permite observar si los grupos estacionales presentan patrones diferenciados en el espacio multivariado. Las variables con mayor contribución a los componentes principales pueden interpretarse como las más influyentes en la dinámica del ecosistema.
+
+### 10. Análisis de Conglomerados (Clustering jerárquico y k-means)
+
+Se empleó un enfoque de agrupamiento para identificar patrones ocultos entre las observaciones, basándose en variables físico-químicas y biológicas.
+
+Pasos principales:
+
+Selección de variables numéricas.
+
+Estandarización de los datos.
+
+Aplicación de k-means con 3 centros.
+
+Visualización del agrupamiento en el espacio PCA.
+
+Cálculo de estadísticas promedio por grupo.
+
+Asignación de nombres descriptivos a los grupos.
+
+Grupos identificados:
+
+Grupo 1: Mesotrófico productivo
+
+Grupo 2: Oligotrófico frío
+
+Grupo 3: Oligotrófico cálido
+
+Visualización del clustering:
+
+fviz_cluster(list(data = vars_scaled, cluster = grupos),
+             palette = "Dark2",
+             geom = "point",
+             ellipse.type = "convex")
+
+Interpretación esperada:Los grupos reflejan diferencias en el estado trófico y condiciones ambientales del lago, proporcionando una herramienta útil para la caracterización del ecosistema.
+
+### 11. Exportación de resultados
+
+Se exportaron los resultados más relevantes del análisis, incluyendo:
+
+Tabla de datos simulados (datos_simulados_fitoplancton.csv)
+
+Resultados de regresión lineal (resumen_regresion.txt)
+
+Resultados del ANOVA (resumen_anova.txt)
+
+Resumen de los clusters (resumen_clusters.csv)
+
+Puedes ejecutar cada bloque de código directamente desde el script .R, asegurándote de tener cargadas las librerías necesarias (psych, ggplot2, FactoMineR, factoextra, dplyr).
+
 
 ## Contacto
 Para dudas o sugerencias, puedes escribir a [Aljahe].
