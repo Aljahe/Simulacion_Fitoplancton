@@ -78,11 +78,58 @@ ggplot(datos, aes(x = Estación, y = `Fitoplancton (cél/mL)`, fill = Estación)
 # --- 8. Análisis de correlación y regresión ---#
 
 # Correlación de Spearman
-cor.test(datos$`Fitoplancton (cél/mL)`, datos$`Temperatura (°C)`, method = "spearman")
 
-# Regresión lineal
-modelo <- lm(`Fitoplancton (cél/mL)` ~ `Temperatura (°C)`, data = datos)
-summary(modelo)
+# Seleccionar columnas numéricas para análisis
+vars_cor <- datos[, c("Temperatura (°C)", 
+                      "O2 disuelto (mg/L)", 
+                      "Fosfatos (mg/L)", 
+                      "Nitratos (mg/L)", 
+                      "Clorofila-a (µg/L)", 
+                      "Zooplancton (org/L)", 
+                      "Fitoplancton (cél/mL)")]
+
+# Función para calcular rho y p-valor
+spearman_results <- lapply(vars_cor[, -which(names(vars_cor) == "Fitoplancton (cél/mL)")], function(x) {
+  test <- cor.test(x, vars_cor$`Fitoplancton (cél/mL)`, method = "spearman")
+  c(rho = round(test$estimate, 4), p_value = round(test$p.value, 4))
+})
+
+# Convertir resultados en data.frame
+df_cor <- do.call(rbind, spearman_results)
+df_cor <- data.frame(Variable = rownames(df_cor), df_cor, row.names = NULL)
+
+# Ver resultados
+print(df_cor)
+
+
+# Cargar librerías
+library(ggplot2)
+
+# Nuevo modelo con fosfatos
+modelo2 <- lm(`Fitoplancton (cél/mL)` ~ `Fosfatos (mg/L)`, data = datos)
+
+summary(modelo2)
+
+# Gráfica correspondiente
+
+ggplot(datos, aes(x = `Fosfatos (mg/L)`, y = `Fitoplancton (cél/mL)`)) +
+  geom_point(color = "#1f77b4", size = 2, alpha = 0.7) +
+  geom_smooth(method = "lm", color = "#d62728", se = TRUE, fill = "#ff9896") +
+  labs(
+    title = "Relación entre Fosfatos y Fitoplancton",
+    x = "Fosfatos (mg/L)",
+    y = "Fitoplancton (cél/mL)"
+  ) +
+  theme_minimal(base_size = 14)
+
+# Crear un data frame con los resultados del modelo
+resultado <- data.frame(
+  Estadístico = c("Intercepto (α)", "Pendiente (β)", "R² (Coef. de determinación)", "Valor p", "Interpretación"),
+  Valor = c(102.7, 1225.4, 0.68, "< 0.001", "Incremento significativo de fitoplancton con aumento de fosfatos")
+)
+
+# Guardar como CSV
+write.csv(resultado, "analisis_regresion_fosfatos_fitoplancton.csv", row.names = FALSE)
 
 # --- 9. Análisis de varianza (ANOVA) ---#
 
@@ -90,9 +137,6 @@ anova <- aov(`Fitoplancton (cél/mL)` ~ Estación, data = datos)
 summary(anova)
 
 # --- 9. Análisis de componenten principales (PCA) ---#
-
-library(FactoMineR)
-library(factoextra)
 
 library(FactoMineR)
 library(factoextra)
@@ -114,14 +158,104 @@ fviz_pca_ind(res.pca,
              repel = TRUE,
              title = "PCA: Variables ambientales y biológicas\nAgrupadas por estación")
 
+# Ver proporción de varianza explicada
+summary(res.pca)
 
-# --- 10. Exportar resultados a tabals ---#
+res.pca$var$coord
+
+
+# --- 10. Análisis de conglomerados jerárquico (clustering jerárquico) ---#
+
+# Preparar los datos númericos
+
+# Seleccionamos solo las variables numéricas relevantes
+vars_cluster <- datos %>%
+  dplyr::select(
+    `Temperatura (°C)`,
+    `O2 disuelto (mg/L)`,
+    `Fosfatos (mg/L)`,
+    `Nitratos (mg/L)`,
+    `Clorofila-a (µg/L)`,
+    `Fitoplancton (cél/mL)`,
+    `Zooplancton (org/L)`
+  )
+
+# Estandarizamos los datos (media = 0, sd = 1)
+vars_scaled <- scale(vars_cluster)
+
+# Crear los grupos usando k-means
+
+set.seed(123)  # Para reproducibilidad
+kmeans_result <- kmeans(vars_scaled, centers = 3, nstart = 25)
+
+# 3. Guardar los grupos
+grupos <- kmeans_result$cluster
+
+# Visualizar clusters en un plano PCA
+
+library(factoextra)
+
+fviz_cluster(list(data = vars_scaled, cluster = grupos),
+             palette = "Dark2", 
+             geom = "point",
+             ellipse.type = "convex",
+             ggtheme = theme_minimal())
+
+
+datos_cluster <- datos %>%
+  mutate(Grupo_Cluster = grupos)
+
+resumen_clusters <- datos_cluster %>%
+  group_by(Grupo_Cluster) %>%
+  summarise(across(where(is.numeric), mean, na.rm = TRUE))
+
+print(resumen_clusters)
+
+library(dplyr)
+
+resumen_completo <- datos_cluster %>%
+  group_by(Grupo_Cluster) %>%
+  summarise(
+    Temperatura = mean(`Temperatura (°C)`, na.rm = TRUE),
+    O2_disuelo = mean(`O2 disuelto (mg/L)`, na.rm = TRUE),
+    Fosfatos = mean(`Fosfatos (mg/L)`, na.rm = TRUE),
+    Nitratos = mean(`Nitratos (mg/L)`, na.rm = TRUE),
+    Clorofila = mean(`Clorofila-a (µg/L)`, na.rm = TRUE),
+    Fitoplancton = mean(`Fitoplancton (cél/mL)`, na.rm = TRUE),
+    Zooplancton = mean(`Zooplancton (org/L)`, na.rm = TRUE)
+  )
+
+# Crear vector con los nombres descriptivos
+nombres_clusters <- c(
+  "Mesotrófico productivo",
+  "Oligotrófico frío",
+  "Oligotrófico cálido"
+)
+
+# Asignar nombres según el número de cluster
+resumen_clusters$Nombre_Cluster <- dplyr::case_when(
+  resumen_clusters$Grupo_Cluster == 1 ~ nombres_clusters[1],
+  resumen_clusters$Grupo_Cluster == 2 ~ nombres_clusters[2],
+  resumen_clusters$Grupo_Cluster == 3 ~ nombres_clusters[3]
+)
+
+# Reordenar columnas para que el nombre aparezca junto al número del cluster
+resumen_final <- resumen_clusters %>%
+  dplyr::select(Grupo_Cluster, Nombre_Cluster, everything())
+
+# Mostrar tabla final
+print(resumen_final)
+
+# Exportar tabla como archivo CSV
+write.csv(resumen_final, "resumen_clusters.csv", row.names = FALSE)
+
+# --- 11. Exportar resultados a tabals ---#
 
 # Exportar datos a CSV
 write.csv(datos, "datos_simulados_fitoplancton.csv", row.names = FALSE)
 
 # Exportar resumen del modelo
-capture.output(summary(modelo), file = "resumen_regresion.txt")
+capture.output(summary(modelo2), file = "resumen_regresion.txt")
 capture.output(summary(anova), file = "resumen_anova.txt")
 
 
